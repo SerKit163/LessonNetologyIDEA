@@ -40,18 +40,24 @@ fun main(args: Array<String>) {
                         }
 
                     }.awaitAll()
-//                println(posts)
+                println("===================================")
+                println(posts)
+                println("===================================")
                 println()
 
                 for (i in posts) {
                     val post = i.post
-                    val commentsContent = if (!i.comments.isEmpty()) i.comments[0].content else ""
 
                     val authorPost = getAuthor(client, i.post.authorId).let { author ->
                         async {
                             author
                         }
                     }.await()
+
+
+
+//                    val commentsContent = if (!i.comments.isEmpty()) i.comments[0].content else ""
+
 
                     val authorComment = if (!i.comments.isEmpty()) getAuthor(client, i.comments[0].authorId).let { author ->
                         async {
@@ -65,8 +71,21 @@ fun main(args: Array<String>) {
                     println("\t${post.content}")
                     println("----------------------------------")
                     println("<<< КОММЕНТАРИЙ >>>")
-                    println(if (authorComment != null) "Автор комментария: ${authorComment.name}" else "")
-                    println("\t$commentsContent")
+
+                    for (c in i.comments) {
+                        val commentA = getAuthor(client, c.authorId).let { author ->
+                            async {
+                                author
+                            }.await()
+                        }
+
+                        println("Author Comment: ${commentA.name}")
+                        println("\t${c.content}")
+
+                    }
+
+//                    println(if (authorComment != null) "Автор комментария: ${authorComment.name}" else "")
+//                    println("\t$commentsContent")
                     println("----------------------------------")
                     println()
                 }
