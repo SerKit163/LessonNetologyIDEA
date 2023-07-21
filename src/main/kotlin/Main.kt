@@ -40,54 +40,66 @@ fun main(args: Array<String>) {
                         }
 
                     }.awaitAll()
-                println("===================================")
-                println(posts)
-                println("===================================")
+//                println("===================================")
+//                println(posts)
+//                println("===================================")
                 println()
 
                 for (i in posts) {
                     val post = i.post
 
-                    val authorPost = getAuthor(client, i.post.authorId).let { author ->
+                    val authorPostDeferred = async {
+                        getAuthor(client, i.post.authorId)
+                    }
+
+                    val authorCommentsDeferred = i.comments.map { comment ->
                         async {
-                            author
+                            getAuthor(client, comment.authorId)
                         }
-                    }.await()
+                    }
 
+                    val authorPost = authorPostDeferred.await()
+                    val authorComments = authorCommentsDeferred.awaitAll()
 
+//                    val authorPost = async { getAuthor(client, i.post.authorId) }.await()
 
-//                    val commentsContent = if (!i.comments.isEmpty()) i.comments[0].content else ""
-
-
-                    val authorComment = if (!i.comments.isEmpty()) getAuthor(client, i.comments[0].authorId).let { author ->
-                        async {
-                            author
-                        }
-                    }.await() else null
+//                    НЕ правильно
+//                    val authorComment = if (!i.comments.isEmpty()) getAuthor(client, i.comments[0].authorId).let { author ->
+//                        async {
+//                            author
+//                        }
+//                    }.await() else null
 
                     println()
                     println("##################################")
                     println("Автор поста: ${authorPost.name}")
                     println("\t${post.content}")
                     println("----------------------------------")
-                    println("<<< КОММЕНТАРИЙ >>>")
 
-                    for (c in i.comments) {
-                        val commentA = getAuthor(client, c.authorId).let { author ->
-                            async {
-                                author
-                            }.await()
-                        }
-
-                        println("Author Comment: ${commentA.name}")
-                        println("\t${c.content}")
-
+                    i.comments.forEach { comment ->
+                        println("<<< КОММЕНТАРИЙ >>>")
+                        println("Автор комментария: ${authorComments.find { 
+                            it.id == comment.authorId
+                        }?.name ?: ""}")
+                        println("\t${comment.content}")
+                        println("----------------------------------")
                     }
+                    println()
+
+
+
+
+//                    for (c in i.comments) {
+//                        val commentA = async { getAuthor(client, c.authorId) }.await()
+//
+//                        println("Author Comment: ${commentA.name}")
+//                        println("\t${c.content}")
+//                    }
 
 //                    println(if (authorComment != null) "Автор комментария: ${authorComment.name}" else "")
 //                    println("\t$commentsContent")
-                    println("----------------------------------")
-                    println()
+//                    println("----------------------------------")
+//                    println()
                 }
 
             } catch (e: Exception) {
